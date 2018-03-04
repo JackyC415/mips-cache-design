@@ -181,6 +181,71 @@ unsigned int Fetch ( int addr) {
 /* Decode instr, returning decoded instruction. */
 void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
     /* Your code goes here */
+	
+	d-> op = instr >> 26;
+	//instruction w/ opcode 26; R-format
+	if(!d->op){ 
+		//R-type
+		d-> type = R;
+		//compute register rs
+		d-> regs.r.rs = (instr & 0x03ffffff) >> 21;
+		//compute register rt
+		d-> regs.r.rt = (instr & 0x001fffff) >> 16;
+		//compute register rd
+		d-> regs.r.rd = (instr & 0x0000ffff) >> 11;
+		//computes shamt
+		d-> regs.r.shamt = (instr & 0x000007ff) >> 6; 
+		//computes funct
+		d-> regs.r.funct = (instr & 0x0000003f); 
+		//updates register values
+		rVals->R_rs = mips.registers[d->regs.r.rs];	
+		rVals->R_rt = mips.registers[d->regs.r.rt];
+		rVals->R_rd = mips.registers[d->regs.r.rd];
+
+	//else if instruction w/ opcode 3 or 2; J-format
+	}else if(d->op == 3 || d->op == 2){ 
+		//J-type
+		d-> type = J;
+		//computes register target
+		d-> regs.j.target = (instr & 0x03ffffff) << 2;
+	}else{
+		//else I-type
+		d-> type = I;
+		//computes register rs
+		d-> regs.i.rs = (instr & 0x03ffffff) >> 21; 
+		//computes register rt
+		d-> regs.i.rt = (instr & 0x001fffff) >> 16; 
+		//computes immediate
+		d-> regs.i.addr_or_immed = (instr & 0x0000ffff);
+		
+		//check for zero extend
+		if(d-> op == 0xc || d-> op == 0xd){
+			d-> regs.i.addr_or_immed = d-> regs.i.addr_or_immed;
+		
+			//check for sign extend
+		}else if(d-> op == 0x9 || d-> op == 0x23 || d-> op == 0x2b){
+			if(d-> regs.i.addr_or_immed < 0x8000){
+				d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed;
+			}else{
+				d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed | 0xffff0000;
+				d->regs.i.addr_or_immed = -(!(d-> regs.i.addr_or_immed)+1);
+			}
+		//check for beq and bne
+		}else if(d->op == 0x4 || d->op == 0x5){
+  			//computes address
+			d->regs.i.addr_or_immed = (((mips.pc) + 4) + ((d-> regs.i.addr_or_immed)<< 2));
+		}else{
+      			//check for lui
+			if(d-> regs.i.addr_or_immed < 0x8000){
+				d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed | 0x00000000;
+			}else{
+				d->regs.i.addr_or_immed =-(!(d-> regs.i.addr_or_immed)+1);
+			}
+		}		
+		//updates register values
+		rVals->R_rs = mips.registers[d->regs.r.rs];
+		rVals->R_rt = mips.registers[d->regs.r.rt];
+	}
 }
 
 /*
