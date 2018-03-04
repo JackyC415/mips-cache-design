@@ -208,8 +208,9 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 		d-> type = J;
 		//computes register target
 		d-> regs.j.target = (instr & 0x03ffffff) << 2;
+	//else I-format
 	}else{
-		//else I-type
+		//I-type
 		d-> type = I;
 		//computes register rs
 		d-> regs.i.rs = (instr & 0x03ffffff) >> 21; 
