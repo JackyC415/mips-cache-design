@@ -183,7 +183,8 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
     /* Your code goes here */
 	
 	d-> op = instr >> 26;
-	//instruction w/ opcode 26; R-format
+	
+	//instruction not w/ opcode 26; R-format
 	if(!d->op){ 
 		//R-type
 		d-> type = R;
@@ -208,6 +209,7 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 		d-> type = J;
 		//computes register target
 		d-> regs.j.target = (instr & 0x03ffffff) << 2;
+	
 	//else I-format
 	}else{
 		//I-type
@@ -223,7 +225,7 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 		if(d-> op == 0xc || d-> op == 0xd){
 			d-> regs.i.addr_or_immed = d-> regs.i.addr_or_immed;
 		
-			//check for sign extend
+		//check for sign extend
 		}else if(d-> op == 0x9 || d-> op == 0x23 || d-> op == 0x2b){
 			if(d-> regs.i.addr_or_immed < 0x8000){
 				d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed;
