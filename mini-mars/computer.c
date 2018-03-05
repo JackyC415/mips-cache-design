@@ -273,6 +273,44 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
 void UpdatePC ( DecodedInstr* d, int val) {
     mips.pc+=4;
     /* Your code goes here */
+	
+	//R-format instruction
+	if(d->type == R){ 
+		//JR PC=R[rs]
+		if(d->regs.r.funct == 0x08){ 
+			mips.pc = mips.registers[d-> regs.r.rs];
+		}else{
+		//increments by 4
+		mips.pc+=4;
+		}
+	
+	//I-format instruction
+	}else if(d->type == I){ 
+		//BEQ if(R[rs]==R[rt])PC=PC+4+BranchAddr
+		if(d->op == 0x4){
+		if(val == 1){
+		        mips.pc = (d-> regs.i.addr_or_immed);
+		}else{
+		//PC increments by 4
+		mips.pc+=4;
+		}
+		//BNE if(R[rs]!=R[rt])PC=PC+4+BranchAddr
+		}else if(d->op == 0x5){	
+		if(val == 1){
+			mips.pc =(d-> regs.i.addr_or_immed);
+		}else{
+		//PC increments by 4
+		mips.pc+=4;
+		}
+		}else{
+		//PC increments by 4
+		mips.pc+=4;
+		}
+		
+	//J-format instruction
+	}else{ 
+		mips.pc = (((mips.pc + 4) & 0x10000000) + (d-> regs.j.target));
+	}
 }
 
 /*
