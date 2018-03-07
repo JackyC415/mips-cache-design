@@ -184,9 +184,9 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 	
 	d-> op = instr >> 26;
 	
-	//instruction not w/ opcode 26; R-format
+	//R-format
 	if(!d->op){ 
-		//R-type
+	// | opcode |   rs   |   rt   |   rd   |  shamt |  funct |
 		d-> type = R;
 		//compute register rs
 		d-> regs.r.rs = (instr & 0x03ffffff) >> 21;
@@ -198,21 +198,21 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 		d-> regs.r.shamt = (instr & 0x000007ff) >> 6; 
 		//computes funct
 		d-> regs.r.funct = (instr & 0x0000003f); 
-		//updates register values
+		//updates register rs, rt & rd values
 		rVals->R_rs = mips.registers[d->regs.r.rs];	
 		rVals->R_rt = mips.registers[d->regs.r.rt];
 		rVals->R_rd = mips.registers[d->regs.r.rd];
 
 	//else if instruction w/ opcode 3 or 2; J-format
 	}else if(d->op == 3 || d->op == 2){ 
-		//J-type
+            // |  opcode  |   rs   |   rt   |      immediate        |
 		d-> type = J;
 		//computes register target
 		d-> regs.j.target = (instr & 0x03ffffff) << 2;
 	
 	//else I-format
 	}else{
-		//I-type
+	   // |  opcode  |   rs   |   rt    |       address          |
 		d-> type = I;
 		//computes register rs
 		d-> regs.i.rs = (instr & 0x03ffffff) >> 21; 
@@ -245,7 +245,7 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
 				d->regs.i.addr_or_immed =-(!(d-> regs.i.addr_or_immed)+1);
 			}
 		}		
-		//updates register values
+		//updates register rs & rt values
 		rVals->R_rs = mips.registers[d->regs.r.rs];
 		rVals->R_rt = mips.registers[d->regs.r.rt];
 	}
@@ -274,7 +274,7 @@ void UpdatePC ( DecodedInstr* d, int val) {
     mips.pc+=4;
     /* Your code goes here */
 	
-	//R-format instruction
+	//R-format instruction (jump register exception)
 	if(d->type == R){ 
 		//JR PC=R[rs]
 		if(d->regs.r.funct == 0x08){ 
@@ -284,7 +284,7 @@ void UpdatePC ( DecodedInstr* d, int val) {
 		mips.pc+=4;
 		}
 	
-	//I-format instruction
+	//I-format instruction (branches exception)
 	}else if(d->type == I){ 
 		//BEQ if(R[rs]==R[rt])PC=PC+4+BranchAddr
 		if(d->op == 0x4){
