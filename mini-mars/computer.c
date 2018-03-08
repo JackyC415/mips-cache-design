@@ -274,43 +274,42 @@ void UpdatePC ( DecodedInstr* d, int val) {
     mips.pc+=4;
     /* Your code goes here */
 	
-	//R-format instruction (jump register exception)
-	if(d->type == R){ 
-		//JR PC=R[rs]
-		if(d->regs.r.funct == 0x08){ 
-			mips.pc = mips.registers[d-> regs.r.rs];
-		}else{
-		//increments by 4
-		mips.pc+=4;
-		}
-	
-	//I-format instruction (branches exception)
-	}else if(d->type == I){ 
-		//BEQ if(R[rs]==R[rt])PC=PC+4+BranchAddr
-		if(d->op == 0x4){
-		if(val == 1){
-		        mips.pc = (d-> regs.i.addr_or_immed);
-		}else{
-		//PC increments by 4
-		mips.pc+=4;
-		}
-		//BNE if(R[rs]!=R[rt])PC=PC+4+BranchAddr
-		}else if(d->op == 0x5){	
-		if(val == 1){
-			mips.pc =(d-> regs.i.addr_or_immed);
-		}else{
-		//PC increments by 4
-		mips.pc+=4;
-		}
-		}else{
-		//PC increments by 4
-		mips.pc+=4;
-		}
-		
-	//J-format instruction
-	}else{ 
-		mips.pc = (((mips.pc + 4) & 0x10000000) + (d-> regs.j.target));
-	}
+	 /*For all registers w/o exception, PC+4;*/
+    
+    //R-format (jump register exception)
+    if(d->type == R){
+        //JR PC=R[rs]
+        if(d->regs.r.funct == 0x08){
+            mips.pc = mips.registers[d-> regs.r.rs];
+        }else{
+            mips.pc+=4;
+        }
+
+    //I-format (branches exception)
+    }else if(d->type == I){
+        //BEQ instruction
+        if(d->op == 0x4){
+            if(val == 1){
+                mips.pc = (d-> regs.i.addr_or_immed);
+            }else{
+                mips.pc+=4;
+            }
+            //BNE instruction
+        }else if(d->op == 0x5){
+            if(val == 1){
+                mips.pc =(d-> regs.i.addr_or_immed);
+            }else{
+
+                mips.pc+=4;
+            }
+        }else{
+            mips.pc+=4;
+        }
+
+    //J-format
+    }else{
+        mips.pc = (((mips.pc + 4) & 0x10000000) + (d-> regs.j.target));
+    }
 }
 
 /*
