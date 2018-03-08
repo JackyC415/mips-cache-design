@@ -225,7 +225,7 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
         if(d-> op == 0xc || d-> op == 0xd){
             d-> regs.i.addr_or_immed = d-> regs.i.addr_or_immed;
 
-            //check for sign extend
+        //check for sign extend
         }else if(d-> op == 0x9 || d-> op == 0x23 || d-> op == 0x2b){
             if(d-> regs.i.addr_or_immed < 0x8000){
                 d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed;
@@ -233,7 +233,8 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
                 d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed | 0xffff0000;
                 d->regs.i.addr_or_immed = -(!(d-> regs.i.addr_or_immed)+1);
             }
-            //check for beq and bne
+
+        //check for branches
         }else if(d->op == 0x4 || d->op == 0x5){
             //computes address
             d->regs.i.addr_or_immed = (((mips.pc) + 4) + ((d-> regs.i.addr_or_immed)<< 2));
