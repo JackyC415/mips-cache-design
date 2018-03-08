@@ -2,18 +2,26 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include "computer.h"
-#undef mips			/* gcc already has a def for mips */
+
+#undef mips            /* gcc already has a def for mips */
 
 unsigned int endianSwap(unsigned int);
 
-void PrintInfo (int changedReg, int changedMem);
-unsigned int Fetch (int);
-void Decode (unsigned int, DecodedInstr*, RegVals*);
-int Execute (DecodedInstr*, RegVals*);
-int Mem(DecodedInstr*, int, int *);
-void RegWrite(DecodedInstr*, int, int *);
-void UpdatePC(DecodedInstr*, int);
-void PrintInstruction (DecodedInstr*);
+void PrintInfo(int changedReg, int changedMem);
+
+unsigned int Fetch(int);
+
+void Decode(unsigned int, DecodedInstr *, RegVals *);
+
+int Execute(DecodedInstr *, RegVals *);
+
+int Mem(DecodedInstr *, int, int *);
+
+void RegWrite(DecodedInstr *, int, int *);
+
+void UpdatePC(DecodedInstr *, int);
+
+void PrintInstruction(DecodedInstr *);
 
 /*Globally accessible Computer variable*/
 Computer mips;
@@ -25,21 +33,21 @@ RegVals rVals;
  *  to zero, and the instructions read from the given file.
  *  The other arguments govern how the program interacts with the user.
  */
-void InitComputer (FILE* filein, int printingRegisters, int printingMemory,
-                   int debugging, int interactive) {
+void InitComputer(FILE *filein, int printingRegisters, int printingMemory,
+                  int debugging, int interactive) {
     int k;
     unsigned int instr;
 
     /* Initialize registers and memory */
 
-    for (k=0; k<32; k++) {
+    for (k = 0; k < 32; k++) {
         mips.registers[k] = 0;
     }
 
     /* stack pointer - Initialize to highest address of data segment */
-    mips.registers[29] = 0x00400000 + (MAXNUMINSTRS+MAXNUMDATA)*4;
+    mips.registers[29] = 0x00400000 + (MAXNUMINSTRS + MAXNUMDATA) * 4;
 
-    for (k=0; k<MAXNUMINSTRS+MAXNUMDATA; k++) {
+    for (k = 0; k < MAXNUMINSTRS + MAXNUMDATA; k++) {
         mips.memory[k] = 0;
     }
 
@@ -48,9 +56,9 @@ void InitComputer (FILE* filein, int printingRegisters, int printingMemory,
         /*swap to big endian, convert to host byte order. Ignore this.*/
         mips.memory[k] = ntohl(endianSwap(instr));
         k++;
-        if (k>MAXNUMINSTRS) {
-            fprintf (stderr, "Program too big.\n");
-            exit (1);
+        if (k > MAXNUMINSTRS) {
+            fprintf(stderr, "Program too big.\n");
+            exit(1);
         }
     }
 
@@ -61,39 +69,39 @@ void InitComputer (FILE* filein, int printingRegisters, int printingMemory,
 }
 
 unsigned int endianSwap(unsigned int i) {
-    return (i>>24)|(i>>8&0x0000ff00)|(i<<8&0x00ff0000)|(i<<24);
+    return (i >> 24) | (i >> 8 & 0x0000ff00) | (i << 8 & 0x00ff0000) | (i << 24);
 }
 
 /*
  *  Run the simulation.
  */
-void Simulate () {
+void Simulate() {
     char s[40];  /* used for handling interactive input */
     unsigned int instr;
-    int changedReg=-1, changedMem=-1, val;
+    int changedReg = -1, changedMem = -1, val;
     DecodedInstr d;
 
     /* Initialize the PC to the start of the code section */
     mips.pc = 0x00400000;
     while (1) {
         if (mips.interactive) {
-            printf ("> ");
-            fgets (s,sizeof(s),stdin);
+            printf("> ");
+            fgets(s, sizeof(s), stdin);
             if (s[0] == 'q') {
                 return;
             }
         }
 
         /* Fetch instr at mips.pc, returning it in instr */
-        instr = Fetch (mips.pc);
+        instr = Fetch(mips.pc);
 
-        printf ("Executing instruction at %8.8x: %8.8x\n", mips.pc, instr);
+        printf("Executing instruction at %8.8x: %8.8x\n", mips.pc, instr);
 
         /*
 	 * Decode instr, putting decoded instr in d
 	 * Note that we reuse the d struct for each instruction.
 	 */
-        Decode (instr, &d, &rVals);
+        Decode(instr, &d, &rVals);
 
         /*Print decoded instruction*/
         PrintInstruction(&d);
@@ -104,7 +112,7 @@ void Simulate () {
 	 */
         val = Execute(&d, &rVals);
 
-        UpdatePC(&d,val);
+        UpdatePC(&d, val);
 
         /*
 	 * Perform memory load or store. Place the
@@ -122,7 +130,7 @@ void Simulate () {
          */
         RegWrite(&d, val, &changedReg);
 
-        PrintInfo (changedReg, changedMem);
+        PrintInfo(changedReg, changedMem);
     }
 }
 
@@ -136,35 +144,35 @@ void Simulate () {
  *  registers or just the one that changed, and whether to print
  *  all the nonzero memory or just the memory location that changed.
  */
-void PrintInfo ( int changedReg, int changedMem) {
+void PrintInfo(int changedReg, int changedMem) {
     int k, addr;
-    printf ("New pc = %8.8x\n", mips.pc);
+    printf("New pc = %8.8x\n", mips.pc);
     if (!mips.printingRegisters && changedReg == -1) {
-        printf ("No register was updated.\n");
+        printf("No register was updated.\n");
     } else if (!mips.printingRegisters) {
-        printf ("Updated r%2.2d to %8.8x\n",
-                changedReg, mips.registers[changedReg]);
+        printf("Updated r%2.2d to %8.8x\n",
+               changedReg, mips.registers[changedReg]);
     } else {
-        for (k=0; k<32; k++) {
-            printf ("r%2.2d: %8.8x  ", k, mips.registers[k]);
-            if ((k+1)%4 == 0) {
-                printf ("\n");
+        for (k = 0; k < 32; k++) {
+            printf("r%2.2d: %8.8x  ", k, mips.registers[k]);
+            if ((k + 1) % 4 == 0) {
+                printf("\n");
             }
         }
     }
     if (!mips.printingMemory && changedMem == -1) {
-        printf ("No memory location was updated.\n");
+        printf("No memory location was updated.\n");
     } else if (!mips.printingMemory) {
-        printf ("Updated memory at address %8.8x to %8.8x\n",
-                changedMem, Fetch (changedMem));
+        printf("Updated memory at address %8.8x to %8.8x\n",
+               changedMem, Fetch(changedMem));
     } else {
-        printf ("Nonzero memory\n");
-        printf ("ADDR	  CONTENTS\n");
-        for (addr = 0x00400000+4*MAXNUMINSTRS;
-             addr < 0x00400000+4*(MAXNUMINSTRS+MAXNUMDATA);
-             addr = addr+4) {
-            if (Fetch (addr) != 0) {
-                printf ("%8.8x  %8.8x\n", addr, Fetch (addr));
+        printf("Nonzero memory\n");
+        printf("ADDR	  CONTENTS\n");
+        for (addr = 0x00400000 + 4 * MAXNUMINSTRS;
+             addr < 0x00400000 + 4 * (MAXNUMINSTRS + MAXNUMDATA);
+             addr = addr + 4) {
+            if (Fetch(addr) != 0) {
+                printf("%8.8x  %8.8x\n", addr, Fetch(addr));
             }
         }
     }
@@ -174,76 +182,76 @@ void PrintInfo ( int changedReg, int changedMem) {
  *  Return the contents of memory at the given address. Simulates
  *  instruction fetch.
  */
-unsigned int Fetch ( int addr) {
-    return mips.memory[(addr-0x00400000)/4];
+unsigned int Fetch(int addr) {
+    return mips.memory[(addr - 0x00400000) / 4];
 }
 
 /* Decode instr, returning decoded instruction. */
-void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
+void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
     /* Your code goes here */
 
-    d-> op = instr >> 26;
+    d->op = instr >> 26;
 
     //R-format
-    if(!d->op){
+    if (!d->op) {
         // | opcode |   rs   |   rt   |   rd   |  shamt |  funct |
-        d-> type = R;
+        d->type = R;
         //compute register rs
-        d-> regs.r.rs = (instr & 0x03ffffff) >> 21;
+        d->regs.r.rs = (instr & 0x03ffffff) >> 21;
         //compute register rt
-        d-> regs.r.rt = (instr & 0x001fffff) >> 16;
+        d->regs.r.rt = (instr & 0x001fffff) >> 16;
         //compute register rd
-        d-> regs.r.rd = (instr & 0x0000ffff) >> 11;
+        d->regs.r.rd = (instr & 0x0000ffff) >> 11;
         //computes shamt
-        d-> regs.r.shamt = (instr & 0x000007ff) >> 6;
+        d->regs.r.shamt = (instr & 0x000007ff) >> 6;
         //computes funct
-        d-> regs.r.funct = (instr & 0x0000003f);
+        d->regs.r.funct = (instr & 0x0000003f);
         //updates register rs, rt & rd values
         rVals->R_rs = mips.registers[d->regs.r.rs];
         rVals->R_rt = mips.registers[d->regs.r.rt];
         rVals->R_rd = mips.registers[d->regs.r.rd];
 
         //else if instruction w/ opcode 3 or 2; J-format
-    }else if(d->op == 3 || d->op == 2){
+    } else if (d->op == 3 || d->op == 2) {
         // |  opcode  |              address                    |
-        d-> type = J;
+        d->type = J;
         //computes register target
-        d-> regs.j.target = (instr & 0x03ffffff) << 2;
+        d->regs.j.target = (instr & 0x03ffffff) << 2;
 
         //else I-format
-    }else{
+    } else {
         // |  opcode  |   rs   |   rt   |      immediate        |
-        d-> type = I;
+        d->type = I;
         //computes register rs
-        d-> regs.i.rs = (instr & 0x03ffffff) >> 21;
+        d->regs.i.rs = (instr & 0x03ffffff) >> 21;
         //computes register rt
-        d-> regs.i.rt = (instr & 0x001fffff) >> 16;
+        d->regs.i.rt = (instr & 0x001fffff) >> 16;
         //computes immediate
-        d-> regs.i.addr_or_immed = (instr & 0x0000ffff);
+        d->regs.i.addr_or_immed = (instr & 0x0000ffff);
 
         //check for zero extend
-        if(d-> op == 0xc || d-> op == 0xd){
-            d-> regs.i.addr_or_immed = d-> regs.i.addr_or_immed;
+        if (d->op == 0xc || d->op == 0xd) {
+            d->regs.i.addr_or_immed = d->regs.i.addr_or_immed;
 
-        //check for sign extend
-        }else if(d-> op == 0x9 || d-> op == 0x23 || d-> op == 0x2b){
-            if(d-> regs.i.addr_or_immed < 0x8000){
-                d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed;
-            }else{
-                d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed | 0xffff0000;
-                d->regs.i.addr_or_immed = -(!(d-> regs.i.addr_or_immed)+1);
+            //check for sign extend
+        } else if (d->op == 0x9 || d->op == 0x23 || d->op == 0x2b) {
+            if (d->regs.i.addr_or_immed < 0x8000) {
+                d->regs.i.addr_or_immed = d->regs.i.addr_or_immed;
+            } else {
+                d->regs.i.addr_or_immed = d->regs.i.addr_or_immed | 0xffff0000;
+                d->regs.i.addr_or_immed = -(!(d->regs.i.addr_or_immed) + 1);
             }
 
-        //check for branches
-        }else if(d->op == 0x4 || d->op == 0x5){
+            //check for branches
+        } else if (d->op == 0x4 || d->op == 0x5) {
             //computes address
-            d->regs.i.addr_or_immed = (((mips.pc) + 4) + ((d-> regs.i.addr_or_immed)<< 2));
-        }else{
+            d->regs.i.addr_or_immed = (((mips.pc) + 4) + ((d->regs.i.addr_or_immed) << 2));
+        } else {
             //check for lui
-            if(d-> regs.i.addr_or_immed < 0x8000){
-                d->regs.i.addr_or_immed = d-> regs.i.addr_or_immed | 0x00000000;
-            }else{
-                d->regs.i.addr_or_immed =-(!(d-> regs.i.addr_or_immed)+1);
+            if (d->regs.i.addr_or_immed < 0x8000) {
+                d->regs.i.addr_or_immed = d->regs.i.addr_or_immed | 0x00000000;
+            } else {
+                d->regs.i.addr_or_immed = -(!(d->regs.i.addr_or_immed) + 1);
             }
         }
         //updates register rs & rt values
@@ -256,12 +264,12 @@ void Decode ( unsigned int instr, DecodedInstr* d, RegVals* rVals) {
  *  Print the disassembled version of the given instruction
  *  followed by a newline.
  */
-void PrintInstruction ( DecodedInstr* d) {
+void PrintInstruction(DecodedInstr *d) {
     /* Your code goes here */
 }
 
 /* Perform computation needed to execute d, returning computed value */
-int Execute ( DecodedInstr* d, RegVals* rVals) {
+int Execute(DecodedInstr *d, RegVals *rVals) {
     /* Your code goes here */
     return 0;
 }
@@ -271,45 +279,45 @@ int Execute ( DecodedInstr* d, RegVals* rVals) {
  * instructions other than branches and jumps, for example, the PC
  * increments by 4 (which we have provided).
  */
-void UpdatePC ( DecodedInstr* d, int val) {
-    mips.pc+=4;
+void UpdatePC(DecodedInstr *d, int val) {
+    mips.pc += 4;
     /* Your code goes here */
 
-    /*For all registers w/o exception, PC+4;*/
+    /*For all instructions w/o exceptions, PC+4;*/
 
     //R-format (jump register exception)
-    if(d->type == R){
+    if (d->type == R) {
         //JR PC=R[rs]
-        if(d->regs.r.funct == 0x08){
-            mips.pc = mips.registers[d-> regs.r.rs];
-        }else{
-            mips.pc+=4;
+        if (d->regs.r.funct == 0x08) {
+            mips.pc = mips.registers[d->regs.r.rs];
+        } else {
+            mips.pc += 4;
         }
 
         //I-format (branches exception)
-    }else if(d->type == I){
+    } else if (d->type == I) {
         //BEQ instruction
-        if(d->op == 0x4){
-            if(val == 1){
-                mips.pc = (d-> regs.i.addr_or_immed);
-            }else{
-                mips.pc+=4;
+        if (d->op == 0x4) {
+            if (val == 1) {
+                mips.pc = (d->regs.i.addr_or_immed);
+            } else {
+                mips.pc += 4;
             }
             //BNE instruction
-        }else if(d->op == 0x5){
-            if(val == 1){
-                mips.pc =(d-> regs.i.addr_or_immed);
-            }else{
+        } else if (d->op == 0x5) {
+            if (val == 1) {
+                mips.pc = (d->regs.i.addr_or_immed);
+            } else {
 
-                mips.pc+=4;
+                mips.pc += 4;
             }
-        }else{
-            mips.pc+=4;
+        } else {
+            mips.pc += 4;
         }
 
         //J-format
-    }else{
-        mips.pc = (((mips.pc + 4) & 0x10000000) + (d-> regs.j.target));
+    } else {
+        mips.pc = (((mips.pc + 4) & 0x10000000) + (d->regs.j.target));
     }
 }
 
@@ -323,7 +331,7 @@ void UpdatePC ( DecodedInstr* d, int val) {
  * with address 0x00400004, and so forth.
  *
  */
-int Mem( DecodedInstr* d, int val, int *changedMem) {
+int Mem(DecodedInstr *d, int val, int *changedMem) {
     /* Your code goes here */
     return 0;
 }
@@ -334,37 +342,39 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
  * put the index of the modified register in *changedReg,
  * otherwise put -1 in *changedReg.
  */
-void RegWrite( DecodedInstr* d, int val, int *changedReg) {
+void RegWrite(DecodedInstr *d, int val, int *changedReg) {
     /* Your code goes here */
 
     //R-format
-    if(d->type == R){
+    if (d->type == R) {
         //if jump register, no updates
-        if( d-> regs.r.funct == 0x08){
+        if (d->regs.r.funct == 0x08) {
             *changedReg = -1;
             //else update any other R-format register values
-        }else{
+        } else {
             *changedReg = d->regs.r.rd;
         }
+
         //I-format
-    }else if(d->type == I) {
+    } else if (d->type == I) {
         //update register value for lw
-        if(d->op == 0x23){
+        if (d->op == 0x23) {
             mips.registers[d->regs.r.rt] = val;
             *changedReg = d->regs.r.rt;
             //no updates for sw, beq and bne registers
-        }else if( d->op == 0x2b || d->op == 0x4 || d->op == 0x5){
+        } else if (d->op == 0x2b || d->op == 0x4 || d->op == 0x5) {
             *changedReg = -1;
-        }else{
+        } else {
             *changedReg = d->regs.r.rt;
         }
+
         //J-format
-    }else{
+    } else {
         //update register value to 31 for jal
-        if(d->op == 3){
+        if (d->op == 3) {
             *changedReg = 31;
             //else no updates
-        }else{
+        } else {
             *changedReg = -1;
         }
     }
