@@ -336,4 +336,36 @@ int Mem( DecodedInstr* d, int val, int *changedMem) {
  */
 void RegWrite( DecodedInstr* d, int val, int *changedReg) {
     /* Your code goes here */
+	
+  //R-format
+    if(d->type == R){
+        //if jump register, no updates
+        if( d-> regs.r.funct == 0x08){
+            *changedReg = -1;
+        //else update any other R-format register values
+        }else{
+            *changedReg = d->regs.r.rd;
+        }
+    //I-format
+    }else if(d->type == I) {
+        //update register value for lw
+        if(d->op == 0x23){
+            mips.registers[d->regs.r.rt] = val;
+            *changedReg = d->regs.r.rt;
+        //no updates for sw, beq and bne registers
+        }else if( d->op == 0x2b || d->op == 0x4 || d->op == 0x5){
+            *changedReg = -1;
+        }else{
+            *changedReg = d->regs.r.rt;
+        }
+    //J-format
+    }else{
+        //update register value to 31 for jal
+        if(d->op == 3){
+            *changedReg = 31;
+        //else no updates
+        }else{
+            *changedReg = -1;
+        }
+    }
 }
