@@ -332,9 +332,99 @@ void PrintInstruction(DecodedInstr *d) {
 /* Perform computation needed to execute d, returning computed value */
 int Execute(DecodedInstr *d, RegVals *rVals) {
     /* Your code goes here */
-
-
+    if (d->type == I){//I Type
+        int rs= d->IRegs.i.rs;
+        int rt= d->IRegs.i.rs;
+        int imm =0;
+        int a = 0;
+        int b = 0;
+	//check function
+        if(d->op==0x9) == 0){//addiu
+             a = rVals->R_rd;
+             imm = rVals->R_rt;
+             return mips.registers[a] +immed;
+        }if(d->op==0xc) == 0){//andi
+             a = rVals->R_rd;
+             imm = rVals->R_rt;
+             return mips.registers[a] & immed;
+        } if(d->op==0x4) == 0){//beq
+             a = rVals->R_rd;
+             b = rVals->R_rs;
+             if((mips.registers[a] - mips.registers[b] == 0)){
+                return rVals->R_rt;
+             }else{
+                return (mips.pc + 4);
+             }
+        }if(d->op==0x5) == 0){//bne
+            a = rVals->R_rd;
+            b = rVals->R_rs;
+            if((mips.registers[a] - mips.registers[b] == 0)){
+                return rVals->R_rt;
+            }else{
+                return mips.pc;
+            }
+        }if(d->op==0xf) == 0){//lui
+             return rVals->R_rt << 16;
+        }if(d->op==0x23) == 0){//lw
+            a = rVals->R_rd;
+            b = rVals->R_rs;
+            return mips.registers[a] + b;
+        }if(d->op==0xd) == 0){//ori
+            a = rVals->R_rd;
+            b = rVals->R_rs;
+            return mips.registers[a] | b;
+        }if(d->op==0x2b) == 0){//sw
+            a = rVals->R_rd;
+            b = rVals->R_rs;
+            return mips.registers[a] + b;
+        }
+    }if(d->type == R){//R Type
+        int rs= d->RRegs.r.rs;
+        int rt= d->RRegs.r.rs;
+        int shamt = d->RRegs.r.shamt;
+        int a = 0;
+        int b = 0;
+        a = rVals->R_rs;
+        b = rVals->R_rt;
+	//check function
+        if(d->op==0x24) == 0){//and
+            a = rVals->R_rs;
+            b = rVals->R_rt;
+            return mips.registers[a] & mips.registers[b];
+        }if(d->op==0x08) == 0){//jr
+            a = rVals->R_rs;
+            return mips.registers[a];
+        }if(d->op==0x25) == 0){//or
+            return rVals->R_rs | rVals->R_rt;
+        }if(d->op==0x2a) == 0){//slt
+            a = rVals->R_rs;
+            b = rVals->R_rt;
+            return (mips.registers[a] < mips.registers[b] ? 1 : 0);
+        }if(d->op==0x00) == 0){//sll
+            a = rVals->R_rs;
+            b = rVals->R_rt;
+            return mips.registers[a] << mips.registers[b];
+        }if(d->op==0x02) == 0){//srl
+            a = rVals->R_rs;
+            b = rVals->R_rt;
+            return mips.registers[a] >> mips.registers[b];
+        }if(d->op==0x23) == 0){//subu
+            a = rVals->R_rs;
+            b = rVals->R_rt;
+            return mips.registers[a] - mips.registers[b];
+        }
+    }if(d->type == J){//J Type
+        if(d->op == 0x2){//jump
+            return rVals->R_rd;
+        }
+        if(d->op == 0x3){//jump and link
+            mips.registers[31] = mips.pc;
+            return rVals->R_rd;
+        }
+    }
+    return 0;
 }
+
 
 /*
  * Update the program counter based on the current instruction. For
