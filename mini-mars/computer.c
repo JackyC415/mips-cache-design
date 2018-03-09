@@ -266,6 +266,69 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
  */
 void PrintInstruction(DecodedInstr *d) {
     /* Your code goes here */
+	
+     //R-format
+    if(d->type == R){
+
+        //storing fields for more efficient printing later
+        int rs=d->regs.r.rs;
+        int rt=d->regs.r.rt;
+        int rd=d->regs.r.rd;
+        int shamt=d->regs.r.shamt;
+        int funct=d->regs.r.funct;
+
+        /*printing instructions addu,subu,sll,srl,and,or,slt & jr respectively*/
+        if(funct==0x21)
+            printf("addu\t$%d, $%d, $%d\n",rd,rs,rt);
+        else if (funct==0x23)
+            printf("subu\t$%d, $%d, $%d\n",rd,rs,rt);
+        else if(funct==0x00)
+            printf("sll\t$%d, $%d, %d\n",rd,rt,shamt);
+        else if(funct==0x02)
+            printf("srl\t$%d, $%d, %d\n",rd,rt,shamt);
+        else if(funct==0x24)
+            printf("and\t$%d, $%d, $%d\n",rd,rs,rt);
+        else if(funct==0x25)
+            printf("or\t$%d, $%d, $%d\n",rd,rs,rt);
+        else if(funct==0x2a)
+            printf("slt\t$%d, $%d, $%d\n",rd,rs,rt);
+        else if(funct==0x08)
+            printf("jr\t$%d\n",rs);//printing jr instruction
+    }
+        //I-format
+    else if (d->type == I){
+
+        int rs =d->regs.i.rs;
+        int rt=d->regs.i.rt;
+        int addr_or_immed=d->regs.i.addr_or_immed;
+
+        /*printing instructions addiu,andi,ori,lui,beq,bne,lw & sw respectively*/
+        if(d->op==0x9)
+            printf("addiu\t$%d, $%d, %d\n",rt,rs,addr_or_immed);
+        else if (d->op==0xc)
+            printf("andi\t$%d, $%d, %d\n",rt,rs,addr_or_immed);
+        else if (d->op==0xd)
+            printf("ori\t$%d, $%d, %d\n",rt,rs,addr_or_immed);
+        else if (d->op==0xf)
+            printf("lui\t$%d, %d\n",rt,addr_or_immed);
+        else if (d->op==0x4)
+            printf("beq\t$%d, $%d, 0x%08X\n",rs,rt,addr_or_immed);
+        else if (d->op==0x5)
+            printf("bne\t$%d, $%d, 0x%08X\n",rs,rt,addr_or_immed);
+        else if (d->op==0x23)
+            printf("lw\t$%d, %d($%d)\n",rt,addr_or_immed,rs);
+        else if (d->op==0x2b)
+            printf("sw\t$%d, %d($%d)\n",rt,addr_or_immed,rs);
+    }
+        //J-format
+    else if (d->type == J){
+
+        /*printing j and jal instructions respectively*/
+        if (d->op==0x2)
+            printf("j\t 0x%08X\n",d->regs.j.target);
+        else if (d->op==0x3)
+            printf("jal\t 0x%08X\n",d->regs.j.target);
+    }
 }
 
 /* Perform computation needed to execute d, returning computed value */
@@ -333,7 +396,25 @@ void UpdatePC(DecodedInstr *d, int val) {
  */
 int Mem(DecodedInstr *d, int val, int *changedMem) {
     /* Your code goes here */
-    return 0;
+	
+	 if(d->op == 0x23 || d->op == 0x2b){
+        if(val < 0x00401000 || val > 0x00403fff){
+            printf("Memory Access Exception at [0x%x]: address [0x%x]\n",mips.pc-4,val);
+            exit(0);
+        }else{
+            if(d->op == 0x23){        //LW R[rt] = M[R[rs]+SignExtImm]
+                val = mips.memory[(val - 0x00400000)/4];
+                *changedMem = -1;
+                return val;
+            }else{   //SW M[R[rs]+SignExtImm] = R[rt]
+                mips.memory[(val-0x00400000)/4] = mips.registers[d->regs.i.rt];
+                *changedMem = val;
+                return -1;
+            }
+        }
+    }else{
+        return -1;
+	 }
 }
 
 /*
