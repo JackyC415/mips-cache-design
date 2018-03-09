@@ -6,21 +6,13 @@
 #undef mips            /* gcc already has a def for mips */
 
 unsigned int endianSwap(unsigned int);
-
 void PrintInfo(int changedReg, int changedMem);
-
 unsigned int Fetch(int);
-
 void Decode(unsigned int, DecodedInstr *, RegVals *);
-
 int Execute(DecodedInstr *, RegVals *);
-
 int Mem(DecodedInstr *, int, int *);
-
 void RegWrite(DecodedInstr *, int, int *);
-
 void UpdatePC(DecodedInstr *, int);
-
 void PrintInstruction(DecodedInstr *);
 
 /*Globally accessible Computer variable*/
