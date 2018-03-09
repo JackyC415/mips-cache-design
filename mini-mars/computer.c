@@ -189,6 +189,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
 
     //R-format
     if (!d->op) {
+
         // | opcode |   rs   |   rt   |   rd   |  shamt |  funct |
         d->type = R;
 
@@ -206,6 +207,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
 
         //J-Format; opcode w/ 2 or 3
     } else if (d->op == 2 || d->op == 3) {
+
         // |  opcode  |              address                    |
         d->type = J;
 
@@ -214,6 +216,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
 
         //else I-format
     } else {
+
         // |  opcode  |   rs   |   rt   |      immediate        |
         d->type = I;
 
@@ -262,8 +265,7 @@ void PrintInstruction(DecodedInstr *d) {
 
         //R-format
     if(d->type == R){
-
-        //storing fields for more efficient printing later
+        
         int rs=d->regs.r.rs;
         int rt=d->regs.r.rt;
         int rd=d->regs.r.rd;
@@ -316,11 +318,13 @@ void PrintInstruction(DecodedInstr *d) {
         //J-format
     else if (d->type == J){
 
+        int target = d->regs.j.target;
+
         /*printing instructions j and jal respectively*/
         if (d->op==0x2)
-            printf("j\t 0x%08X\n",d->regs.j.target);
+            printf("j\t 0x%08X\n",target);
         else if (d->op==0x3)
-            printf("jal\t 0x%08X\n",d->regs.j.target);
+            printf("jal\t 0x%08X\n",target);
     }
 
 }
