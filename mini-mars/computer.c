@@ -349,7 +349,6 @@ void UpdatePC(DecodedInstr *d, int val) {
         if (d->regs.r.funct == 0x08) {
             mips.pc = mips.registers[rs];
         } else {
-            //PC+4
             mips.pc += 4;
         }
 
