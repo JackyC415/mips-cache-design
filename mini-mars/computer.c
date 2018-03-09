@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <netinet/in.h>
 #include "computer.h"
 
 #undef mips            /* gcc already has a def for mips */
@@ -18,6 +17,10 @@ void PrintInstruction(DecodedInstr *);
 /*Globally accessible Computer variable*/
 Computer mips;
 RegVals rVals;
+
+/*Collaborators: Jacky Z. Chen and Isaac Velasquez*/
+
+/*All implementation referenced MIPS Green Sheet -- https://inst.eecs.berkeley.edu/~cs61c/resources/MIPS_Green_Sheet.pdf*/
 
 /*
  *  Return an initialized computer with the stack pointer set to the
@@ -283,37 +286,37 @@ void PrintInstruction(DecodedInstr *d) {
         else if(funct==0x2a)
             printf("slt\t$%d, $%d, $%d\n",rd,rs,rt);
         else if(funct==0x08)
-            printf("jr\t$%d\n",rs);//printing jr instruction
+            printf("jr\t$%d\n",rs);
     }
         //I-format
     else if (d->type == I){
 
         int rs =d->regs.i.rs;
         int rt=d->regs.i.rt;
-        int addr_or_immed=d->regs.i.addr_or_immed;
+        int aori = d->regs.i.addr_or_immed;
 
         /*printing instructions addiu,andi,ori,lui,beq,bne,lw & sw respectively*/
         if(d->op==0x9)
-            printf("addiu\t$%d, $%d, %d\n",rt,rs,addr_or_immed);
+            printf("addiu\t$%d, $%d, %d\n",rt,rs,aori);
         else if (d->op==0xc)
-            printf("andi\t$%d, $%d, %d\n",rt,rs,addr_or_immed);
+            printf("andi\t$%d, $%d, %d\n",rt,rs,aori);
         else if (d->op==0xd)
-            printf("ori\t$%d, $%d, %d\n",rt,rs,addr_or_immed);
+            printf("ori\t$%d, $%d, %d\n",rt,rs,aori);
         else if (d->op==0xf)
-            printf("lui\t$%d, %d\n",rt,addr_or_immed);
+            printf("lui\t$%d, %d\n",rt,aori);
         else if (d->op==0x4)
-            printf("beq\t$%d, $%d, 0x%08X\n",rs,rt,addr_or_immed);
+            printf("beq\t$%d, $%d, 0x%08X\n",aori);
         else if (d->op==0x5)
-            printf("bne\t$%d, $%d, 0x%08X\n",rs,rt,addr_or_immed);
+            printf("bne\t$%d, $%d, 0x%08X\n",rs,rt,aori);
         else if (d->op==0x23)
-            printf("lw\t$%d, %d($%d)\n",rt,addr_or_immed,rs);
+            printf("lw\t$%d, %d($%d)\n",rt,aori,rs);
         else if (d->op==0x2b)
-            printf("sw\t$%d, %d($%d)\n",rt,addr_or_immed,rs);
+            printf("sw\t$%d, %d($%d)\n",rt,aori,rs);
     }
         //J-format
     else if (d->type == J){
 
-        /*printing j and jal instructions respectively*/
+        /*printing instructions j and jal respectively*/
         if (d->op==0x2)
             printf("j\t 0x%08X\n",d->regs.j.target);
         else if (d->op==0x3)
@@ -326,7 +329,7 @@ void PrintInstruction(DecodedInstr *d) {
 int Execute(DecodedInstr *d, RegVals *rVals) {
     /* Your code goes here */
 
-    
+
 }
 
 /*
@@ -339,12 +342,9 @@ void UpdatePC(DecodedInstr *d, int val) {
 
     /*For all instructions w/o exceptions, PC+4;*/
 
-    int rs = d->regs.r.rs;
-    int aori = d->regs.i.addr_or_immed;
-    int target = d->regs.j.target;
-
     //R-format (jump register exception)
     if (d->type == R) {
+        int rs = d->regs.r.rs;
         //JR PC=R[rs]
         if (d->regs.r.funct == 0x08) {
             mips.pc = mips.registers[rs];
@@ -354,6 +354,7 @@ void UpdatePC(DecodedInstr *d, int val) {
 
       //I-format (branches exception)
     } else if (d->type == I) {
+        int aori = d->regs.i.addr_or_immed;
         //BEQ instruction
         if (d->op == 0x4) {
             if (val == 1) {
@@ -374,6 +375,7 @@ void UpdatePC(DecodedInstr *d, int val) {
 
         //J-format
     } else {
+        int target = d->regs.j.target;
         mips.pc = (((mips.pc + 4) & 0x10000000) + (target));
     }
 }
@@ -391,24 +393,28 @@ void UpdatePC(DecodedInstr *d, int val) {
 int Mem(DecodedInstr *d, int val, int *changedMem) {
     /* Your code goes here */
 
-    if(d->op == 0x23 || d->op == 0x2b){
-        if(val < 0x00401000 || val > 0x00403fff){
+    //if instructions are SW or LW
+    if(d->op == 0x2b || d->op == 0x23){
+        if(val > 0x00403fff || val < 0x00401000 ){
             printf("Memory Access Exception at [0x%x]: address [0x%x]\n",mips.pc-4,val);
             exit(0);
         }else{
-            if(d->op == 0x23){        //LW R[rt] = M[R[rs]+SignExtImm]
-                val = mips.memory[(val - 0x00400000)/4];
-                *changedMem = -1;
-                return val;
-            }else{   //SW M[R[rs]+SignExtImm] = R[rt]
+              //SW: M[R[rs]+SignExtImm] = R[rt]
+            if(d->op == 0x2b){
                 mips.memory[(val-0x00400000)/4] = mips.registers[d->regs.i.rt];
                 *changedMem = val;
                 return -1;
+
+                //LW: R[rt] = M[R[rs]+SignExtImm]
+            }else{
+                val = mips.memory[(val - 0x00400000)/4];
+                //no updates
+                *changedMem = -1;
+                return val;
             }
         }
-    }else{
-        return -1;
     }
+    return -1;
 }
 
 /*
