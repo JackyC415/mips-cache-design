@@ -2,9 +2,9 @@
 main:
 _start:
 	addiu	$5,$0,4
-	addiu	$5,$5,100000	
+	addiu	$5,$5,100	
 	addiu	$6,$6,-1
-	addiu	$6,$6,0x7fff
+	addiu	$6,$6,8
 	
 	addu	$6,$0,$0
 	addu	$6,$6,$5
@@ -22,7 +22,6 @@ loop:	slt	$7,$6,$5
 	j	loop
 	
 branched:
-
 	addu	$6,$0,$0
 	addu	$7,$0,$0
 	jr	$ra
