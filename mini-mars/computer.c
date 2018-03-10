@@ -393,6 +393,11 @@ int Execute(DecodedInstr *d, RegVals *rVals) {
         a = rVals->R_rs;
         b = rVals->R_rt;
         //check function
+	if (d->op == 0x21) {//and
+            a = rVals->R_rs;
+            b = rVals->R_rt;
+            return mips.registers[a] + mips.registers[b];
+        }
         if (d->op == 0x24) {//and
             a = rVals->R_rs;
             b = rVals->R_rt;
