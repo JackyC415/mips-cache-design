@@ -299,21 +299,21 @@ void PrintInstruction(DecodedInstr *d) {
 
         /*printing instructions addiu,andi,ori,lui,beq,bne,lw & sw respectively*/
         if(d->op==0x9)
-            printf("addiu\t$%d, $%d, %d\n",rt,rs,aori);
+            printf("addiu\t$%d, $%d, %d\n",rt, rs, aori);
         else if (d->op==0xc)
-            printf("andi\t$%d, $%d, %d\n",rt,rs,aori);
+            printf("andi\t$%d, $%d, %d\n",rt, rs, aori);
         else if (d->op==0xd)
-            printf("ori\t$%d, $%d, %d\n",rt,rs,aori);
+            printf("ori\t$%d, $%d, %d\n",rt, rs, aori);
         else if (d->op==0xf)
-            printf("lui\t$%d, $%d\n",rt,aori);
+            printf("lui\t$%d, $%d\n", rt, aori);
         else if (d->op==0x4)
             printf("beq\t$%d, $%d, 0x%08X\n",rs, rt, aori);
         else if (d->op==0x5)
-            printf("bne\t$%d, $%d, 0x%08X\n",rs,rt,aori);
+            printf("bne\t$%d, $%d, 0x%08X\n",rs, rt ,aori);
         else if (d->op==0x23)
-            printf("lw\t$%d, %d($%d)\n",rt,aori,rs);
+            printf("lw\t$%d, %d($%d)\n",rt, aori, rs);
         else if (d->op==0x2b)
-            printf("sw\t$%d, %d($%d)\n",rt,aori,rs);
+            printf("sw\t$%d, %d($%d)\n",rt, aori, rs);
     }
         //J-format
     else if (d->type == J){
@@ -332,112 +332,100 @@ void PrintInstruction(DecodedInstr *d) {
 /* Perform computation needed to execute d, returning computed value */
 int Execute(DecodedInstr *d, RegVals *rVals) {
     /* Your code goes here */
-    if (d->type == I) {//I Type
 
-        int imm = 0;
-        int a = 0;
-        int b = 0;
-        //check function
-        if (d->op == 0x9) {//addiu
-            a = rVals->R_rd;
-            imm = rVals->R_rt;
-            return mips.registers[a] + imm;
-        }
-        if (d->op == 0xc) {//andi
-            a = rVals->R_rd;
-            imm = rVals->R_rt;
-            return mips.registers[a] & imm;
-        }
-        if (d->op == 0x4) {//beq
-            a = rVals->R_rd;
-            b = rVals->R_rs;
-            if ((mips.registers[a] - mips.registers[b] == 0)) {
-                return rVals->R_rt;
-            } else {
-                return (mips.pc + 4);
+    if(d->type == R){ //Instruction R
+        int funct = d->regs.r.funct;
+        if(funct == 0x21){		//ADDU R[rd] = R[rs] + R[rt]
+            rVals->R_rd = rVals->R_rs + rVals-> R_rt;
+            mips.registers[d->regs.r.rd] = rVals -> R_rd;
+            return  rVals-> R_rd;
+
+        }else if(funct == 0x23){	 //SUBU R[rd] = R[rs] - R[rt]
+            rVals->R_rd = rVals->R_rs - rVals-> R_rt;
+            mips.registers[d->regs.r.rd] = rVals -> R_rd;
+            return  rVals-> R_rd;
+        }else if(funct == 0x00){ 	//SLL R[rd] = R[rt] << shamt
+            rVals->R_rd = rVals-> R_rt << d-> regs.r.shamt;
+            mips.registers[d->regs.r.rd] = rVals -> R_rd;
+            return  rVals-> R_rd;
+        }else if(funct == 0x02){ 	//SRL R[rd] = R[rt] >> shamt
+            rVals->R_rd = (rVals-> R_rt >>  d-> regs.r.shamt) & ~(((0x1 << 31) >> d->regs.r.shamt) << 1);
+            mips.registers[d->regs.r.rd] = rVals -> R_rd;
+            return  rVals-> R_rd;
+        }else if(funct == 0x24){	 //AND R[rd] = R[rs] & R[rt]
+            rVals-> R_rd = rVals-> R_rt & rVals->R_rs;
+            mips.registers[d->regs.r.rd] = rVals -> R_rd;
+            return rVals-> R_rd;
+        }else if(funct == 0x25){	//OR  R[rd] = R[rs] | R[rt]
+            rVals-> R_rd = rVals-> R_rt | rVals->R_rs;
+            mips.registers[d->regs.r.rd] = rVals -> R_rd;
+            return rVals-> R_rd;
+        }else if(funct == 0x2a){	//SLT R[rd] = (R[rs] < R[rt]) ? 1 : 0
+            if(rVals-> R_rs < rVals-> R_rt){
+                rVals->R_rd = 1;
+            }else{
+                rVals->R_rd = 0;
             }
+            mips.registers[d->regs.r.rd] = rVals -> R_rd;
+            return rVals-> R_rd;
+        }else if(funct == 0x08){	//JR PC=R[rs]
+            //JR does nothing in ALU, so it does nothing here
+            return rVals-> R_rs;
+        }else{
+            exit(0);
         }
-        if (d->op == 0x5) {//bne
-            a = rVals->R_rd;
-            b = rVals->R_rs;
-            if ((mips.registers[a] - mips.registers[b] == 0)) {
-                return rVals->R_rt;
-            } else {
-                return mips.pc;
+    }else if(d->type == I){ //Instruction I
+        int op = d->op;
+
+	int rt = d->regs.r.rt;
+	int aori = d-> regs.i.addr_or_immed;
+
+        if(op == 0x9){ //ADDIU R[rt] = R[rs] + SignExtImm
+            rVals->R_rt = rVals->R_rs + aori;
+            mips.registers[rt] = rVals->R_rt;
+            return  rVals-> R_rt;
+
+
+        }else if(op == 0xc){ //ANDI R[rt] = R[rs] & ZeroExtImm
+            rVals->R_rt = ((rVals->R_rs) & (0x0000ffff)) & d-> regs.i.addr_or_immed;
+            mips.registers[d->regs.r.rt] = rVals->R_rt;
+            return  rVals-> R_rt;
+        }else if(op == 0xd){ //ORI R[rt] = R[rs] | ZeroExtImm
+            rVals->R_rt = ((rVals->R_rs) & (0x0000ffff)) | d-> regs.i.addr_or_immed;
+            mips.registers[d->regs.r.rt] = rVals->R_rt;
+            return  rVals-> R_rt;
+        }else if(op == 0xf){  //LUI R[rt] = {imm, 16’b0}
+            rVals->R_rt = (d-> regs.i.addr_or_immed << 16);
+            mips.registers[d->regs.r.rt] = rVals->R_rt;
+            return  rVals-> R_rt;
+        }else if(op == 0x23){ //LW R[rt] = M[R[rs]+SignExtImm]
+            return ((rVals->R_rs + d-> regs.i.addr_or_immed) << 4);
+        }else if(op == 0x2b){ //SW M[R[rs]+SignExtImm] = R[rt]
+            return ((rVals->R_rs + d-> regs.i.addr_or_immed) << 4);
+        }else if(op == 0x4){  //BEQ  if(R[rs]==R[rt])PC=PC+4+BranchAddr
+            if(rVals ->R_rs == rVals ->R_rt){
+                return 1;
+            }else{
+                return 0;
             }
+        }else if(op == 0x5){ //BNE if(R[rs]!=R[rt]) PC=PC+4+BranchAddr
+            if(rVals ->R_rs != rVals ->R_rt){
+                return 1;
+            }else{
+                return 0;
+            }
+        }else{
+            exit(0);
         }
-        if (d->op == 0xf) {//lui
-            return rVals->R_rt << 16;
-        }
-        if (d->op == 0x23) {//lw
-            a = rVals->R_rd;
-            b = rVals->R_rs;
-            return mips.registers[a] + b;
-        }
-        if (d->op == 0xd) {//ori
-            a = rVals->R_rd;
-            b = rVals->R_rs;
-            return mips.registers[a] | b;
-        }
-        if (d->op == 0x2b) {//sw
-            a = rVals->R_rd;
-            b = rVals->R_rs;
-            return mips.registers[a] + b;
-
-        }
-    }
-    else if (d->type == R) {//R Type
-
-        int a = 0;
-        int b = 0;
-        a = rVals->R_rs;
-        b = rVals->R_rt;
-        //check function
-	if (d->op == 0x21) {//and
-            a = rVals->R_rs;
-            b = rVals->R_rt;
-            return mips.registers[a] + mips.registers[b];
-        }
-        if (d->op == 0x24) {//and
-            a = rVals->R_rs;
-            b = rVals->R_rt;
-            return mips.registers[a] & mips.registers[b];
-        }
-        if (d->op == 0x08) {//jr
-            a = rVals->R_rs;
-            return mips.registers[a];
-        }
-        if (d->op == 0x25) {//or
-            return rVals->R_rs | rVals->R_rt;
-        }
-        if (d->op == 0x2a) {//slt
-            a = rVals->R_rs;
-            b = rVals->R_rt;
-            return (mips.registers[a] < mips.registers[b] ? 1 : 0);
-        }
-        if (d->op == 0x00) {//sll
-            a = rVals->R_rs;
-            b = rVals->R_rt;
-            return mips.registers[a] << mips.registers[b];
-        }
-        if (d->op == 0x02) {//srl
-            a = rVals->R_rs;
-            b = rVals->R_rt;
-            return mips.registers[a] >> mips.registers[b];
-        }
-        if (d->op == 0x23) {//subu
-            a = rVals->R_rs;
-            b = rVals->R_rt;
-            return mips.registers[a] - mips.registers[b];
-        }
-    }
-    if (d->type == J) {//J Type
-        if (d->op == 0x2) {//jump
-            return rVals->R_rd;
-        }
-        if (d->op == 0x3) {//jump and link
-            mips.registers[31] = mips.pc;
-            return rVals->R_rd;
+    }else{ //Instruction J
+        int op = d->op;
+        if(op == 0x2){ //J  PC=JumpAddr
+            return 0;//It does nothing in execute stage
+        }else if(op == 0x3){ //JAL R[31]=PC+8;PC=JumpAddr
+            mips.registers[31]=mips.pc+4;
+            return 0;
+        }else{
+            exit(0);
         }
     }
     return 0;
@@ -457,28 +445,26 @@ void UpdatePC(DecodedInstr *d, int val) {
 
     //R-format (jump register exception)
     if (d->type == R) {
-        int rs = d->regs.r.rs;
         //JR PC=R[rs]
         if (d->regs.r.funct == 0x08) {
-            mips.pc = mips.registers[rs];
+            mips.pc = mips.registers[d->regs.r.rs];
         } else {
             mips.pc += 4;
         }
 
         //I-format (branches exception)
     } else if (d->type == I) {
-        int aori = d->regs.i.addr_or_immed;
         //BEQ instruction
         if (d->op == 0x4) {
             if (val == 1) {
-                mips.pc = (aori);
+                mips.pc = (d->regs.i.addr_or_immed);
             } else {
                 mips.pc += 4;
             }
             //BNE instruction
         } else if (d->op == 0x5) {
             if (val == 1) {
-                mips.pc = (aori);
+                mips.pc = (d->regs.i.addr_or_immed);
             } else {
                 mips.pc += 4;
             }
@@ -488,8 +474,7 @@ void UpdatePC(DecodedInstr *d, int val) {
 
         //J-format
     } else {
-        int target = d->regs.j.target;
-        mips.pc = (((mips.pc + 4) & 0x10000000) + (target));
+        mips.pc = (((mips.pc + 4) & 0x10000000) + (d->regs.j.target));
     }
 }
 
