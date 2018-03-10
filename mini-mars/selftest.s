@@ -1,37 +1,26 @@
 .text
 main:
 _start:
-	addiu	$5,$0,4
-	addiu	$5,$5,100000	
-	addiu	$6,$6,-1
-	addiu	$6,$6,0x7fff
+	addiu	$4,$0,40
+	addiu	$5,$0,1000	
+	addi	$6,$6,1
+	addiu	$7,$6,80
 	
 	addu	$6,$0,$0
-	addu	$6,$6,$5
-	addu	$6,$6,$5
-	subu	$6,$6,$5
-	addiu	$6,$6,5
-	addu	$6,$0,$0
-	addiu	$6,$6,16
-	sll	$5,$6,2
-	srl	$5,$6,4
-	addiu	$5,$0,3
-loop:	slt	$7,$6,$5
-	beq	$7,$0,branched
-	addiu	$5,$5,-1
-	j	loop
-	
-branched:
-
-	addu	$6,$0,$0
+	addu	$6,$6,$6
+	addu	$7,$6,$5
+	subu	$5,$6,$5
+	addiu	$6,$6,1
 	addu	$7,$0,$0
+	addiu	$5,$6,6
+	sll	$5,$6,2
+	srl	$5,$6,2
+	addiu	$5,$0,3
+loop:	slt	$5,$6,$5
+	beq	$5,$0,branch
+	subi	$5,$5,1
+	j	loop
+branch: addu	$6,$0,$0
+	addu	$5,$0,$0
+	li      $v0, 0
 	jr	$ra
-	
-	
-
-
-
-
-
-
-	
