@@ -205,7 +205,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
         rVals->R_rt = mips.registers[d->regs.r.rt];
         rVals->R_rd = mips.registers[d->regs.r.rd];
 
-        //J-Format; opcode w/ 2 or 3
+        //J-Format; opcode w/ # 2 or 3
     } else if (d->op == 2 || d->op == 3) {
 
         // |  opcode  |              address                    |
@@ -214,7 +214,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
         //computes register target
         d->regs.j.target = (instr & 0x03ffffff) << 2;
 
-        //else I-format
+      //else I-format
     } else {
 
         // |  opcode  |   rs   |   rt   |      immediate        |
@@ -238,12 +238,12 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
                 d->regs.i.addr_or_immed = -(!(d->regs.i.addr_or_immed) + 1);
             }
 
-            //check for branches (beq or bne)
+          //check for branches (beq or bne)
         } else if (d->op == 0x4 || d->op == 0x5) {
             //PC=PC+4+BranchAddr
             d->regs.i.addr_or_immed = (((mips.pc) + 4) + ((d->regs.i.addr_or_immed) << 2));
 
-            //check for lui
+          //check for lui
         } else {
             if (d->regs.i.addr_or_immed < 0x8000) {
                 d->regs.i.addr_or_immed = d->regs.i.addr_or_immed | 0x00000000;
@@ -265,7 +265,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
 void PrintInstruction(DecodedInstr *d) {
     /* Your code goes here */
 
-    //R-format
+    //R-format instructions
     if(d->type == 0){
 
         int rs=d->regs.r.rs;
@@ -292,7 +292,7 @@ void PrintInstruction(DecodedInstr *d) {
         else if(funct==0x08)
             printf("jr\t$%d\n",rs);
     }
-        //I-format
+    //I-format instructions
     else if (d->type == I){
 
         int rs =d->regs.i.rs;
@@ -317,7 +317,8 @@ void PrintInstruction(DecodedInstr *d) {
         else if (d->op==0x2b)
             printf("sw\t$%d, %d($%d)\n",rt, aori, rs);
     }
-        //J-format
+
+    //J-format instructions
     else if (d->type == J){
 
         int target = d->regs.j.target;
@@ -341,38 +342,38 @@ int Execute(DecodedInstr *d, RegVals *rVals) {
         int funct = d->regs.r.funct;
         int rd = d->regs.r.rd;
         int shamt = d-> regs.r.shamt;
-	    
-	//addu: R[rd] = R[rs] + R[rt]
+
+        //addu: R[rd] = R[rs] + R[rt]
         if(funct == 0x21){
             rVals->R_rd = rVals->R_rs + rVals-> R_rt;
             mips.registers[rd] = rVals -> R_rd;
             return  rVals-> R_rd;
-	//subu: R[rd] = R[rs] - R[rt]	
+            //subu: R[rd] = R[rs] - R[rt]
         }else if(funct == 0x23){
             rVals->R_rd = rVals->R_rs - rVals-> R_rt;
             mips.registers[rd] = rVals -> R_rd;
             return  rVals-> R_rd;
-	//sll: R[rd] = R[rt] << shamt	
+            //sll: R[rd] = R[rt] << shamt
         }else if(funct == 0x00){
             rVals->R_rd = rVals-> R_rt << shamt;
             mips.registers[rd] = rVals -> R_rd;
             return  rVals-> R_rd;
-	 //srl: R[rd] = R[rt] >> shamt	
+            //srl: R[rd] = R[rt] >> shamt
         }else if(funct == 0x02){
             rVals->R_rd = (rVals-> R_rt >> shamt) & ~(((0x1 << 31) >> shamt) << 1);
             mips.registers[rd] = rVals -> R_rd;
             return  rVals-> R_rd;
-	 //and: R[rd] = R[rs] & R[rt]	
+            //and: R[rd] = R[rs] & R[rt]
         }else if(funct == 0x24){
             rVals-> R_rd = rVals-> R_rt & rVals->R_rs;
             mips.registers[rd] = rVals -> R_rd;
             return rVals-> R_rd;
-	//or: R[rd] = R[rs] | R[rt]	
+            //or: R[rd] = R[rs] | R[rt]
         }else if(funct == 0x25){
             rVals-> R_rd = rVals-> R_rt | rVals->R_rs;
             mips.registers[rd] = rVals -> R_rd;
             return rVals-> R_rd;
-	//slt: R[rd] = (R[rs] < R[rt]) ? 1 : 0	
+            //slt: R[rd] = (R[rs] < R[rt]) ? 1 : 0
         }else if(funct == 0x2a){
             if(rVals-> R_rs < rVals-> R_rt){
                 rVals->R_rd = 1;
@@ -381,8 +382,8 @@ int Execute(DecodedInstr *d, RegVals *rVals) {
             }
             mips.registers[rd] = rVals -> R_rd;
             return rVals-> R_rd;
-	 //jr: PC=R[rs]	
-        }else if(funct == 0x08){ 
+            //jr: PC=R[rs]
+        }else if(funct == 0x08){
             return rVals-> R_rs;
         }else{
             exit(0);
@@ -390,44 +391,44 @@ int Execute(DecodedInstr *d, RegVals *rVals) {
 
     //I-format instructions
     }else if(d->type == I){
-	    
+
         int rt = d->regs.r.rt;
         int aori = d-> regs.i.addr_or_immed;
-        
-	//addiu: R[rt] = R[rs] + SignExtImm
+
+        //addiu: R[rt] = R[rs] + SignExtImm
         if(d->op == 0x9){
             rVals->R_rt = rVals->R_rs + aori;
             mips.registers[rt] = rVals->R_rt;
             return  rVals-> R_rt;
-	//andi: R[rt] = R[rs] & ZeroExtImm	
+            //andi: R[rt] = R[rs] & ZeroExtImm
         }else if(d->op == 0xc){
             rVals->R_rt = ((rVals->R_rs) & (0x0000ffff)) & aori;
             mips.registers[rt] = rVals->R_rt;
             return  rVals-> R_rt;
-	//ori: R[rt] = R[rs] | ZeroExtImm	
-        }else if(d->op == 0xd){ 
+            //ori: R[rt] = R[rs] | ZeroExtImm
+        }else if(d->op == 0xd){
             rVals->R_rt = ((rVals->R_rs) & (0x0000ffff)) | aori;
             mips.registers[rt] = rVals->R_rt;
             return  rVals-> R_rt;
-	//lui: R[rt] = {imm, 16’b0}	
+            //lui: R[rt] = {imm, 16’b0}
         }else if(d->op == 0xf){
             rVals->R_rt = (aori<< 16);
             mips.registers[rt] = rVals->R_rt;
             return  rVals-> R_rt;
-	//lw: R[rt] = M[R[rs]+SignExtImm]	
+            //lw: R[rt] = M[R[rs]+SignExtImm]
         }else if(d->op == 0x23){
             return ((rVals->R_rs + aori) << 4);
-	//sw: M[R[rs]+SignExtImm] = R[rt]	
+            //sw: M[R[rs]+SignExtImm] = R[rt]
         }else if(d->op == 0x2b){
             return ((rVals->R_rs + aori) << 4);
-	//beq:  if(R[rs]==R[rt])PC=PC+4+BranchAddr	
+            //beq:  if(R[rs]==R[rt])PC=PC+4+BranchAddr
         }else if(d->op == 0x4){
             if(rVals ->R_rs == rVals ->R_rt){
                 return 1;
             }else{
                 return 0;
             }
-	//bne: if(R[rs]!=R[rt]) PC=PC+4+BranchAddr	
+            //bne: if(R[rs]!=R[rt]) PC=PC+4+BranchAddr
         }else if(d->op == 0x5){
             if(rVals ->R_rs != rVals ->R_rt){
                 return 1;
@@ -440,10 +441,10 @@ int Execute(DecodedInstr *d, RegVals *rVals) {
 
     //J-format instructions
     }else{
-	//j: PC=JumpAddr
+        //j: PC=JumpAddr
         if(d->op == 0x2){
             return 0;
-	//jal: R[31]=PC+8;PC=JumpAddr	
+            //jal: R[31]=PC+8;PC=JumpAddr
         }else if(d->op == 0x3){
             mips.registers[31]=mips.pc+4;
             return 0;
@@ -514,7 +515,7 @@ int Mem(DecodedInstr *d, int val, int *changedMem) {
 
     //instruction sw or lw only
     if(d->op == 0x2b || d->op == 0x23){
-        if(val > 0x00403fff || val < 0x00401000 ){
+        if(val > 0x00403fff || val < 0x00401000){
             printf("Memory Access Exception at [0x%x]: address [0x%x]\n",mips.pc-4,val);
             exit(0);
         } else{
@@ -523,12 +524,12 @@ int Mem(DecodedInstr *d, int val, int *changedMem) {
                 mips.memory[(val-0x00400000)/4] = mips.registers[d->regs.i.rt];
                 *changedMem = val;
                 return -1;
-	 }else{
-	//lw: R[rt] = M[R[rs]+SignExtImm]
-           val = mips.memory[(val - 0x00400000)/4];
-             //no updates
-             *changedMem = -1;
-            return val;
+            }else{
+                //lw: R[rt] = M[R[rs]+SignExtImm]
+                val = mips.memory[(val - 0x00400000)/4];
+                //no updates
+                *changedMem = -1;
+                return val;
             }
         }
     }
@@ -566,7 +567,8 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg) {
         if (d->op == 0x23) {
             mips.registers[d->regs.r.rt] = val;
             *changedReg = d->regs.r.rt;
-            //no updates for sw, beq and bne registers
+
+        //no updates for sw, beq and bne registers
         } else if (d->op == 0x2b || d->op == 0x4 || d->op == 0x5) {
             *changedReg = noWB;
             //else update register values
@@ -574,7 +576,7 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg) {
             *changedReg = d->regs.r.rt;
         }
 
-        //J-format
+      //J-format
     } else {
         //update register value to 31 for jal
         if (d->op == 3) {
