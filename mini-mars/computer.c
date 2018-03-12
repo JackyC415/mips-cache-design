@@ -575,14 +575,14 @@ void RegWrite(DecodedInstr *d, int val, int *changedReg) {
         //no updates for sw, beq and bne registers
         } else if (d->op == 0x2b || d->op == 0x4 || d->op == 0x5) {
             *changedReg = noWB;
-            //else update register values
+            //else update any other I-format register values
         } else {
             *changedReg = d->regs.r.rt;
         }
 
       //J-format
     } else {
-        //update register value to 31 for jal
+        //update only register value to 31 for jal
         if (d->op == 3) {
             *changedReg = 31;
             //else no updates
