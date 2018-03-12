@@ -519,10 +519,16 @@ int Mem(DecodedInstr *d, int val, int *changedMem) {
 	
     //instruction sw or lw only
     if(d->op == 0x2b || d->op == 0x23){
+	   
+	//invalid memory address
         if(val > 0x00403fff || val < 0x00401000){
+	/*"Memory Access Exception at [PC val]: address [address]", where [PC val] is the current PC, 
+	and [address] is the offending address, both printed in hex (with leading 0x). 
+	Then you must call exit(0)*/
             printf("Memory Access Exception at [0x%x]: address [0x%x]\n",mips.pc-4,val);
             exit(0);
-        } else{
+        
+	} else{
             //sw: M[R[rs]+SignExtImm] = R[rt]
             if(d->op == 0x2b){
                 mips.memory[(val-0x00400000)/4] = mips.registers[d->regs.i.rt];
