@@ -513,7 +513,7 @@ void UpdatePC(DecodedInstr *d, int val) {
 int Mem(DecodedInstr *d, int val, int *changedMem) {
     /* Your code goes here */
 
-	/*SW will be accessing memory due to storage, but will not WB to register; whereas,
+	/*SW will be accessing & updating memory due to storage, but will not WB to register; whereas,
 	LW will WB to register since we're extracting the data, but will not be updated in memory*/
 	
     //instruction sw or lw only
