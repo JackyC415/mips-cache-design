@@ -554,9 +554,9 @@ int Mem(DecodedInstr *d, int val, int *changedMem) {
 void RegWrite(DecodedInstr *d, int val, int *changedReg) {
     /* Your code goes here */
 
-    //R-format needs to WB all register values except for j register
-    //I-format needs to WB all register values except for sw,beq and bne registers
-    //J-format needs to WB only jal register
+    /*R-format needs to WB all register values except for j register
+    I-format needs to WB all register values except for sw,beq and bne registers
+    J-format needs to WB only jal register*/
 
     int noWB = -1;
 
