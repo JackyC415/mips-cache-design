@@ -211,6 +211,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
         // |  opcode  |              address                    |
         d->type = J;
 
+   //shifted 2 bits left, since MIPS instructions are 32-bits long; start in an address whose lower 2 bits are zero.
         //computes register target
         d->regs.j.target = (instr & 0x03ffffff) << 2;
 
