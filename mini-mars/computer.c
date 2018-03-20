@@ -496,9 +496,9 @@ void UpdatePC(DecodedInstr *d, int val) {
         }
 
         //J-format instructions
-	//To update J-format instructions, we increment the PC by 4 at the default address
-	//and then we add the target address that is computed in decode.
     } else {
+	//to get address, concatenate first four bits of PC
+	//target jump address is pre-computed in decode.
         mips.pc = (((mips.pc + 4) & 0x10000000) + (d->regs.j.target));
     }
 }
@@ -533,7 +533,8 @@ int Mem(DecodedInstr *d, int val, int *changedMem) {
 	} else{
             //sw: M[R[rs]+SignExtImm] = R[rt]
             if(d->op == 0x2b){
-		//instruction address always multiple of four! current mem address value minus original.
+		//data is stored in bytes so multiple of four; same as shifting right by 2! 
+		//access mem address minus original
                 mips.memory[(val-0x00400000)/4] = mips.registers[d->regs.i.rt];
                 *changedMem = val;
                 return -1;
