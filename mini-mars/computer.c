@@ -236,7 +236,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
             if (d->regs.i.addr_or_immed < 0x8000) {
                 d->regs.i.addr_or_immed = d->regs.i.addr_or_immed;
             } else {
-		//2's complement negative one
+		//2's complement; write out number in binary, invert digit and add one to result
                 d->regs.i.addr_or_immed = d->regs.i.addr_or_immed | 0xffff0000;
                 d->regs.i.addr_or_immed = -(!(d->regs.i.addr_or_immed) + 1);
             }
@@ -251,7 +251,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
             if (d->regs.i.addr_or_immed < 0x8000) {
                 d->regs.i.addr_or_immed = d->regs.i.addr_or_immed | 0x00000000;
             } else {
-	   //2's complement negative one
+	   //2's complement; write out number in binary, invert digit and add one to result
                 d->regs.i.addr_or_immed = -(!(d->regs.i.addr_or_immed) + 1);
             }
         }
