@@ -210,10 +210,9 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
 
         // |  opcode  |              address                    |
         d->type = J;
-
-   //For Jump instruction Mips has only 26 bits to determine Jump location. 
-   //Besides, jumps are relative to PC in MIPS. Like branch, immediate jump value need to be word-aligned;
-   //therefore, we need to multiply 26 bit address with four.
+	    
+   //Target address is an 26 bits address shifted left by 2 to obtain 28 bits since instructions are multiple of four.
+   //then we concatenate the high order four bits to transform it into a 32 bits instruction.
         d->regs.j.target = (instr & 0x03ffffff) << 2;
 
       //else I-format
@@ -497,6 +496,8 @@ void UpdatePC(DecodedInstr *d, int val) {
         }
 
         //J-format instructions
+	//To update J-format instructions, we increment the PC by 4 at the default address
+	//and then we add the target address that is computed in decode.
     } else {
         mips.pc = (((mips.pc + 4) & 0x10000000) + (d->regs.j.target));
     }
@@ -532,6 +533,7 @@ int Mem(DecodedInstr *d, int val, int *changedMem) {
 	} else{
             //sw: M[R[rs]+SignExtImm] = R[rt]
             if(d->op == 0x2b){
+		//instruction address always multiple of four! current mem address value minus original.
                 mips.memory[(val-0x00400000)/4] = mips.registers[d->regs.i.rt];
                 *changedMem = val;
                 return -1;
