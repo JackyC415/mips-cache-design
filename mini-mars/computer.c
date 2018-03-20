@@ -232,9 +232,11 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
 
             //check for sign extend
         } else if (d->op == 0x9 || d->op == 0x23 || d->op == 0x2b) {
+	    //positive integer range less than 2^15
             if (d->regs.i.addr_or_immed < 0x8000) {
                 d->regs.i.addr_or_immed = d->regs.i.addr_or_immed;
             } else {
+		//2's complement negative one
                 d->regs.i.addr_or_immed = d->regs.i.addr_or_immed | 0xffff0000;
                 d->regs.i.addr_or_immed = -(!(d->regs.i.addr_or_immed) + 1);
             }
@@ -249,6 +251,7 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
             if (d->regs.i.addr_or_immed < 0x8000) {
                 d->regs.i.addr_or_immed = d->regs.i.addr_or_immed | 0x00000000;
             } else {
+	   //2's complement negative one
                 d->regs.i.addr_or_immed = -(!(d->regs.i.addr_or_immed) + 1);
             }
         }
