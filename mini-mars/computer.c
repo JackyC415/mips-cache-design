@@ -211,8 +211,9 @@ void Decode(unsigned int instr, DecodedInstr *d, RegVals *rVals) {
         // |  opcode  |              address                    |
         d->type = J;
 
-   //shifted 2 bits left, since MIPS instructions are 32-bits long; start in an address whose lower 2 bits are zero.
-        //computes register target
+   //For Jump instruction Mips has only 26 bits to determine Jump location. 
+   //Besides, jumps are relative to PC in MIPS. Like branch, immediate jump value need to be word-aligned;
+   //therefore, we need to multiply 26 bit address with four.
         d->regs.j.target = (instr & 0x03ffffff) << 2;
 
       //else I-format
