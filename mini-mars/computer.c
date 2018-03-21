@@ -421,10 +421,10 @@ int Execute(DecodedInstr *d, RegVals *rVals) {
             return  rVals-> R_rt;
             //lw: R[rt] = M[R[rs]+SignExtImm]
         }else if(d->op == 0x23){
-            return ((rVals->R_rs + aori));
+            return ((rVals->R_rs + aori) << 4);
             //sw: M[R[rs]+SignExtImm] = R[rt]
         }else if(d->op == 0x2b){
-            return ((rVals->R_rs + aori));
+            return ((rVals->R_rs + aori) << 4);
             //beq:  if(R[rs]==R[rt])PC=PC+4+BranchAddr
         }else if(d->op == 0x4){
             if(rVals ->R_rs == rVals ->R_rt){
