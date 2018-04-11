@@ -123,7 +123,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 
   //index is # of sets
 	index_length = uint_log2(set_count);
-  //offset is block
+  //offset is block size
 	offset_length = uint_log2(block_size);
   //tag is 32 bits minus index and offset
 	tag_length = 32 - (index_length + offset_length);
@@ -131,6 +131,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 	index_value = (addr >> offset_length) & ( (1 << index_length) - 1);
 	tag_value = addr >> (offset_length + index_length);
 
+        //user manual block size inputs
 	switch (block_size) {
 	case(4): byte_size = 2; break;
 	case(8): byte_size = 3; break;
