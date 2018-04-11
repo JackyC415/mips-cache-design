@@ -121,11 +121,11 @@ void accessMemory(address addr, word* data, WriteEnable we)
 
 	/* Start adding code here */
 
-  //index is # of sets
+  	//index is # of sets
 	index_length = uint_log2(set_count);
-  //offset is block size
+  	//offset is block size
 	offset_length = uint_log2(block_size);
-  //tag is 32 bits minus index and offset
+  	//tag is 32 bits minus index and offset
 	tag_length = 32 - (index_length + offset_length);
 	offset_value = (addr) & ((1 << offset_length) - 1);
 	index_value = (addr >> offset_length) & ( (1 << index_length) - 1);
@@ -144,7 +144,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 		bHit = 0;
 		int i = 0;
 		while(i < assoc) {
-      //block hit
+      			//block hit
 			if (tag_value == cache[index_value].block[i].tag && cache[index_value].block[i].valid == 1)
 			{
 				cache[index_value].block[i].lru.value = 0;
@@ -167,7 +167,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 						LRU_index = i;
 						LRU_value = cache[index_value].block[i].lru.value;
 					}
-					i++;
+				i++;
 				}
 			}
 
@@ -180,7 +180,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 			i++;
 		}
 	}
-			//random cache replacement policy
+			//check random cache replacement policy
 			else if (policy == RANDOM)
 				LRU_index = randomint(assoc);
 
@@ -189,17 +189,14 @@ void accessMemory(address addr, word* data, WriteEnable we)
 				addr = cache[index_value].block[LRU_index].tag << (index_length + offset_length) + (index_value << offset_length);
 				accessDRAM(Addr, (cache[index_value].block[LRU_index].data), byte_size, WRITE);
 			}
-
 			//cache miss occured, access disk memory
 			accessDRAM(addr, (cache[index_value].block[LRU_index].data), byte_size, READ);
 			cache[index_value].block[LRU_index].lru.value = 0;
 			cache[index_value].block[LRU_index].valid = 1;
 			cache[index_value].block[LRU_index].dirty = VIRGIN;
 			cache[index_value].block[LRU_index].tag = tag_value;
-
 			memcpy (data,(cache[index_value].block[LRU_index].data + offset_value), 4);
 		}
-
 	}
 
 	// memory access write case
@@ -224,7 +221,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 
 			if (bHit == 0)
 			{
-				// least recently used cache replacement policy
+				//check least recently used cache replacement policy
 				if (policy == LRU)
 				{
 					for (int i = 0; i < assoc; i++)
@@ -234,6 +231,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 							LRU_value = cache[index_value].block[i].lru.value;
 						}
 				}
+				//check random replacement policy
 				else if (policy == RANDOM)
 					LRU_index = randomint(assoc);
 
@@ -253,17 +251,17 @@ void accessMemory(address addr, word* data, WriteEnable we)
 				memcpy ((cache[index_value].block[LRU_index].data + offset_value),data, 4);
 			}
 		}
-    //write through
+    		//write through scenario
 		else 
 		{
 			int i = 0;
 			while(i < assoc)
 			{
-        //if block hit
+       				 //block hit
 				if (tag_value == cache[index_value].block[i].tag && cache[index_value].block[i].valid == 1) 
 				{
 					memcpy ((cache[index_value].block[i].data + offset_value),data, 4);
-          //update cache index and block values
+          				//update cache index and block values
 					cache[index_value].block[i].dirty = VIRGIN;
 					cache[index_value].block[i].lru.value = 0;
 					cache[index_value].block[i].valid = 1;
@@ -291,7 +289,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 					LRU_index = randomint(assoc);
 				i++;
         memcpy ((cache[index_value].block[LRU_index].data + offset_value),data, 4);
-        //update cache index and block values
+        			//update cache index and block values
 				cache[index_value].block[LRU_index].lru.value = 0;
 				cache[index_value].block[LRU_index].valid = 1;
 				cache[index_value].block[LRU_index].dirty = VIRGIN;
