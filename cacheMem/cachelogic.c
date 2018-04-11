@@ -205,7 +205,8 @@ void accessMemory(address addr, word* data, WriteEnable we)
 		bHit = 0;
 		if (memory_sync_policy == WRITE_BACK)
 		{
-			for (int i = 0; i < assoc; i++)
+			int i = 0;
+			while(i < assoc)
 			{
 				//block hit
 				if (tag_value == cache[index_value].block[i].tag && cache[index_value].block[i].valid == 1)
@@ -216,7 +217,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 					cache[index_value].block[i].valid = 1;
 					bHit = 1;
 				}
-
+			i++;
 			}
 
 			if (bHit == 0)
@@ -224,12 +225,14 @@ void accessMemory(address addr, word* data, WriteEnable we)
 				//check least recently used cache replacement policy
 				if (policy == LRU)
 				{
-					for (int i = 0; i < assoc; i++)
+					int i = 0;
+					while(i < assoc) {
 						if(LRU_value < cache[index_value].block[i].lru.value)
 						{
 							LRU_index = i;
 							LRU_value = cache[index_value].block[i].lru.value;
 						}
+					i++;
 				}
 				//check random replacement policy
 				else if (policy == RANDOM)
@@ -288,7 +291,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 				else if (policy == RANDOM)
 					LRU_index = randomint(assoc);
 				i++;
-        memcpy ((cache[index_value].block[LRU_index].data + offset_value),data, 4);
+       				 memcpy ((cache[index_value].block[LRU_index].data + offset_value),data, 4);
         			//update cache index and block values
 				cache[index_value].block[LRU_index].lru.value = 0;
 				cache[index_value].block[LRU_index].valid = 1;
