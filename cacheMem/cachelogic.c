@@ -116,7 +116,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 	index_value = (addr >> offset_length) & ( (1 << index_length) - 1);
 	tag_value = addr >> (offset_length + index_length);
 
-  //user manual block size inputs
+  	//user manual block size inputs
 	if(block_size == 4) {
 		byte_size = 2;
 	} else if (block_size == 8) {
@@ -255,7 +255,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 				if (tag_value == cache[index_value].block[i].tag && cache[index_value].block[i].valid 					== 1)
 				{
 					memcpy ((cache[index_value].block[i].data + offset_value),data, 4);
-          //update cache index and block values
+         				 //update cache index and block values
 					cache[index_value].block[i].dirty = VIRGIN;
 					cache[index_value].block[i].lru.value = 0;
 					cache[index_value].block[i].valid = 1;
@@ -285,7 +285,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 					i++;
 
 				memcpy ((cache[index_value].block[LRU_index].data + offset_value),data, 4);
-        //update cache index and block values
+        			//update cache index and block values
 				cache[index_value].block[LRU_index].lru.value = 0;
 				cache[index_value].block[LRU_index].valid = 1;
 				cache[index_value].block[LRU_index].dirty = VIRGIN;
