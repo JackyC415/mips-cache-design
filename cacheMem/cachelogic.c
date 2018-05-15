@@ -115,8 +115,10 @@ void accessMemory(address addr, word* data, WriteEnable we)
 	offset_value = (addr) & ((1 << offset_Size) - 1);
 	index_value = (addr >> offset_Size) & ( (1 << index_Size) - 1);
 	tag_value = addr >> (offset_Size + index_Size);
-
 	TransferUnit byte_size = 0;
+
+
+
 
 	//setting byte sizes for blocks
 	if(block_size == 4) {
@@ -129,18 +131,24 @@ void accessMemory(address addr, word* data, WriteEnable we)
 		byte_size = OCTWORD_SIZE;
 	}
 
+
+
+
   //memory access read case
 	if (we == READ)
 	{
 		blockHit = 0;
 		int i = 0;
 		while(i < assoc) {
-      //block hit
+
+			//block hit & tag matches
 			if (tag_value == cache[index_value].block[i].tag && cache[index_value].block[i].valid == 1)
 			{
 				//update block
 				blockHit = 1;
+				//update lru information
 				cache[index_value].block[i].lru.value = 0;
+				//block is still valid
 				cache[index_value].block[i].valid = 1;
 				//copies the cache data to "data" from the cache and block location at i, the number of bytes to copy is 4
 				memcpy (data,(cache[index_value].block[i].data + offset_value), 4);
@@ -153,6 +161,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 		{
 				int i = 0;
 				while(i < assoc) {
+					//found block by (index) with the lowest LRU value
 					if(LRU_value < cache[index_value].block[i].lru.value)
 					{
 						LRU_index = i;
@@ -162,15 +171,15 @@ void accessMemory(address addr, word* data, WriteEnable we)
 				}
 
 			//check random cache replacement policy
-			if (policy == RANDOM) {
+			if (blockHit == 0 && policy == RANDOM) {
 			//generate random associativity
 			LRU_index = randomint(assoc);
 			}
 
 			if(cache[index_value].block[LRU_index].dirty == DIRTY)
 			{
-				oldAddr = cache[index_value].block[LRU_index].tag << (index_Size + offset_Size) + (index_value << offset_Size);
-				//cache miss occured, access DRAM for WRITE
+				oldAddr = cache[index_value].block[LRU_index].tag << ((index_Size + offset_Size) + (index_value << offset_Size));
+				//write the new data to memory
 				accessDRAM(oldAddr, (cache[index_value].block[LRU_index].data), byte_size, WRITE);
 			}
 			//update block
@@ -185,21 +194,28 @@ void accessMemory(address addr, word* data, WriteEnable we)
 		}
 	}
 
+
+
+
+
+
 	// memory access write case
 	else
 	{
-		//write back scenario
+		//Write case -- write back scenario
 		blockHit = 0;
 		if (memory_sync_policy == WRITE_BACK)
 		{
 			int i = 0;
 			while(i < assoc)
 			{
-				//block hit
+				//if write back is hit; only write to cache
+				//first write, update valid bit to 1 and the corresponding tag
 				if (tag_value == cache[index_value].block[i].tag && cache[index_value].block[i].valid == 1)
 				{
 					//update block
 					blockHit = 1;
+					//since it's a hit, dirty bit will be set.
 					cache[index_value].block[i].dirty = DIRTY;
 					cache[index_value].block[i].lru.value = 0;
 					cache[index_value].block[i].valid = 1;
@@ -215,6 +231,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 					int i = 0;
 					while(i < assoc)
 				{
+					//find the lowest LRU value in block
 						if(LRU_value < cache[index_value].block[i].lru.value)
 						{
 							LRU_index = i;
@@ -222,17 +239,17 @@ void accessMemory(address addr, word* data, WriteEnable we)
 						}
 					i++;
 				}
-			}
 
 			// check random replacement
-			if (policy == RANDOM) {
-			//generate random associativity
+			if (blockHit == 0 && policy == RANDOM) {
+			//generate random associativity; kicks out a block randomly
 			LRU_index = randomint(assoc);
 			}
 
+				//writes to memory later when block is evicted
 				if(cache[index_value].block[LRU_index].dirty == DIRTY)
 				{
-				oldAddr = cache[index_value].block[LRU_index].tag << (index_Size + offset_Size) + (index_value << offset_Size);
+				oldAddr = cache[index_value].block[LRU_index].tag << ((index_Size + offset_Size) + (index_value << offset_Size));
 				//cache miss occured, access DRAM for WRITE
 				accessDRAM(oldAddr, (cache[index_value].block[LRU_index].data), byte_size, WRITE);
 				}
@@ -246,14 +263,21 @@ void accessMemory(address addr, word* data, WriteEnable we)
 				//copies the cache data to "data" from the cache and block location, the number of bytes to copy is 4
 				memcpy ((cache[index_value].block[LRU_index].data + offset_value),data, 4);
 			}
+		}
 
-		//write through scenario
+
+
+
+
+
+
+		//Write case -- write through scenario; main memory always has an up-to-date copy.
 		else
 		{
 			int i = 0;
 			while(i < assoc)
 			{
-       	//block hit
+       	//if write through is hit; write to both cache and memory
 				if (tag_value == cache[index_value].block[i].tag && cache[index_value].block[i].valid == 1)
 				{
           //update block
@@ -261,9 +285,10 @@ void accessMemory(address addr, word* data, WriteEnable we)
 					cache[index_value].block[i].lru.value = 0;
 					cache[index_value].block[i].valid = 1;
 					blockHit = 1;
-					//cache miss occured, access DRAM for WRITE
+					//write to DRAM
 					accessDRAM(addr, (cache[index_value].block[LRU_index].data), byte_size, WRITE);
 					//copies the cache data to "data" from the cache and block location, the number of bytes to copy is 4
+					//read from cache to memory
 					memcpy ((cache[index_value].block[i].data + offset_value),data, 4);
 				}
 				i++;
@@ -276,14 +301,15 @@ void accessMemory(address addr, word* data, WriteEnable we)
 					while(i < assoc)
 						if(LRU_value < cache[index_value].block[i].lru.value)
 						{
+							//update new LRU value
 							LRU_index = i;
 							LRU_value = cache[index_value].block[i].lru.value;
 						}
 						i++;
 
 				//check for random replacement policy
-				if (policy == RANDOM) {
-				//generate random associativity
+				if (blockHit == 0 && policy == RANDOM) {
+				//select block to randomly replace
 					LRU_index = randomint(assoc);
 				}
 
@@ -298,5 +324,7 @@ void accessMemory(address addr, word* data, WriteEnable we)
 				memcpy ((cache[index_value].block[LRU_index].data + offset_value),data, 4);
 			}
 		}
+
+
 	}
 }
